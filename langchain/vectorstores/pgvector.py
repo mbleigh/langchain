@@ -80,27 +80,15 @@ class EmbeddingStore(BaseModel):
     )
     collection = relationship(CollectionStore, back_populates="embeddings")
 
-    embedding: Vector = sqlalchemy.Column(Vector(PGVECTOR_VECTOR_SIZE))
+    vector_size = int(
+        get_from_env("vector_size", "PGVECTOR_VECTOR_SIZE", PGVECTOR_VECTOR_SIZE)
+    )
+    embedding: Vector = sqlalchemy.Column(Vector(vector_size))
     document = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     cmetadata = sqlalchemy.Column(JSON, nullable=True)
 
     # custom_id : any user defined id
     custom_id = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-
-    def __init__(
-        self, *args: Any, vector_size: Optional[int] = None, **kwargs: Any
-    ) -> None:
-        if "embedding" not in kwargs:
-            if vector_size is None:
-                vector_size = int(
-                    get_from_env(
-                        "vector_size",
-                        "PGVECTOR_VECTOR_SIZE",
-                        default=str(PGVECTOR_VECTOR_SIZE),
-                    )
-                )
-            kwargs["embedding"] = sqlalchemy.Column(Vector(vector_size))
-        super().__init__(*args, **kwargs)
 
 
 class QueryResult:
