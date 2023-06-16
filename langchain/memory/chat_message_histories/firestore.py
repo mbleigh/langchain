@@ -92,7 +92,8 @@ class FirestoreChatMessageHistory(BaseChatMessageHistory):
                 "id": self.session_id,
                 "user_id": self.user_id,
                 "messages": messages_to_dict(self.messages),
-            }
+            },
+            merge=True,
         )
 
     def clear(self) -> None:
