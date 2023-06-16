@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
 from langchain.schema import (
@@ -25,6 +26,8 @@ class FirestoreChatMessageHistory(BaseChatMessageHistory):
         collection_name: str,
         session_id: str,
         user_id: str,
+        store_message_timestamp: bool = False,
+        chat_metadata: Dict[str:any] = {},
     ):
         """
         Initialize a new instance of the FirestoreChatMessageHistory class.
@@ -36,6 +39,8 @@ class FirestoreChatMessageHistory(BaseChatMessageHistory):
         self.collection_name = collection_name
         self.session_id = session_id
         self.user_id = user_id
+        self.store_message_timestamp = store_message_timestamp
+        self.chat_metadata = chat_metadata
 
         self._document: Optional[DocumentReference] = None
         self.messages: List[BaseMessage] = []
@@ -80,6 +85,8 @@ class FirestoreChatMessageHistory(BaseChatMessageHistory):
                 self.messages = messages_from_dict(data["messages"])
 
     def add_message(self, message: BaseMessage) -> None:
+        if self.store_message_timestamp:
+            message.additional_kwargs["timestamp"] = datetime.now()
         self.messages.append(message)
         self.upsert_messages()
 
@@ -92,7 +99,8 @@ class FirestoreChatMessageHistory(BaseChatMessageHistory):
                 "id": self.session_id,
                 "user_id": self.user_id,
                 "messages": messages_to_dict(self.messages),
-            },
+            }
+            | self.chat_metadata,
             merge=True,
         )
 
